@@ -9,13 +9,15 @@
 #include <vector>
 #include <optional>
 
+
 namespace cruz
 {
 	struct QueueFamilyIndices {
 		std::optional<uint32_t> graphicsFamily;
+		std::optional<uint32_t> presentFamily;
 
 		bool isComplete() const {
-			return graphicsFamily.has_value();
+			return graphicsFamily.has_value() && presentFamily.has_value();
 		}
 	};
 
@@ -46,12 +48,18 @@ namespace cruz
 		bool isDeviceSuitable(VkPhysicalDevice device);
 		QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 		void createLogicalDevice();
+		void createSurface();
 
 		GLFWwindow* window;
 		VkInstance instance;
+		
 		VkDebugUtilsMessengerEXT debugMessenger;
+		VkSurfaceKHR surface;
+		
 		VkPhysicalDevice physicalDevice;
 		VkDevice device;
+		
 		VkQueue graphicsQueue;
+		VkQueue presentQueue;
 	};
 }
