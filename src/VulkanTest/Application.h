@@ -7,9 +7,19 @@
 #include <stdexcept>
 #include <cstdlib>
 #include <vector>
+#include <optional>
 
 namespace cruz
 {
+	struct QueueFamilyIndices {
+		std::optional<uint32_t> graphicsFamily;
+
+		bool isComplete() const {
+			return graphicsFamily.has_value();
+		}
+	};
+
+
 	class Application
 	{
 	public:
@@ -32,9 +42,13 @@ namespace cruz
 			void* pUserData);
 
 		void setupDebugMessenger();
+		void pickPhysicalDevice();
+		bool isDeviceSuitable(VkPhysicalDevice device);
+		QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 
 		GLFWwindow* window;
 		VkInstance instance;
 		VkDebugUtilsMessengerEXT debugMessenger;
+		VkPhysicalDevice physicalDevice;
 	};
 }
