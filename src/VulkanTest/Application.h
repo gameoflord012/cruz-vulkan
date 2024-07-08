@@ -60,6 +60,7 @@ namespace cruz
 		VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
 		VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 		void createSwapChain();
+		void createImageViews();
 
 		GLFWwindow* window;
 		VkInstance instance;
@@ -77,5 +78,6 @@ namespace cruz
 		std::vector<VkImage> swapChainImages;
 		VkFormat swapChainImageFormat;
 		VkExtent2D swapChainExtent;
+		std::vector<VkImageView> swapChainImageViews;
 	};
 }
