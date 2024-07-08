@@ -4,6 +4,9 @@
 #include <cstdint>
 #include <limits>
 #include <algorithm>
+#include <fstream>
+#include <filesystem>
+#include <string>
 
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
@@ -68,6 +71,7 @@ void cruz::Application::initVulkan()
 	pickPhysicalDevice();
 	createLogicalDevice();
 	createSwapChain();
+	createGraphicsPipeline();
 }
 
 void cruz::Application::mainLoop()
@@ -510,4 +514,30 @@ void cruz::Application::createImageViews()
 			throw std::runtime_error("failed to create image views!");
 		}
 	}
+}
+
+std::vector<char> cruz::Application::readFile(const std::string& filename)
+{
+	std::ifstream file(filename, std::ios::ate | std::ios::binary);
+
+	if (!file.is_open()) {
+
+		throw std::runtime_error("failed to open file! " + (std::filesystem::current_path() / filename).string());
+	}
+
+	size_t fileSize = (size_t)file.tellg();
+	std::vector<char> buffer(fileSize);
+
+	file.seekg(0);
+	file.read(buffer.data(), fileSize);
+
+	file.close();
+
+	return buffer;
+}
+
+void cruz::Application::createGraphicsPipeline()
+{
+	auto vertShaderCode = readFile("Shader/vert.spv");
+	auto fragShaderCode = readFile("Shader/frag.spv");
 }

@@ -62,6 +62,10 @@ namespace cruz
 		void createSwapChain();
 		void createImageViews();
 
+		static std::vector<char> readFile(const std::string& filename);
+		void createGraphicsPipeline();
+
+
 		GLFWwindow* window;
 		VkInstance instance;
 		
