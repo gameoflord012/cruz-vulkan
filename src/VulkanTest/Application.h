@@ -64,6 +64,7 @@ namespace cruz
 
 		static std::vector<char> readFile(const std::string& filename);
 		void createGraphicsPipeline();
+		VkShaderModule createShaderModule(const std::vector<char>& code);
 
 
 		GLFWwindow* window;
