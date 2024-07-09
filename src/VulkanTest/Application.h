@@ -66,6 +66,7 @@ namespace cruz
 		void createGraphicsPipeline();
 		VkShaderModule createShaderModule(const std::vector<char>& code);
 		void createRenderPass();
+		void createFramebuffers();
 
 		GLFWwindow* window;
 		VkInstance instance;
@@ -88,5 +89,7 @@ namespace cruz
 		VkPipelineLayout pipelineLayout;
 		VkRenderPass renderPass;
 		VkPipeline graphicsPipeline;
+
+		std::vector<VkFramebuffer> swapChainFramebuffers;
 	};
 }
