@@ -87,5 +87,6 @@ namespace cruz
 
 		VkPipelineLayout pipelineLayout;
 		VkRenderPass renderPass;
+		VkPipeline graphicsPipeline;
 	};
 }
