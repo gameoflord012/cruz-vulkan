@@ -38,41 +38,48 @@ namespace cruz
 		void mainLoop();
 		void cleanup();
 		void createInstance();
+
 		bool checkValidationLayerSupport();
 		std::vector<const char*> getRequiredExtensions();
 		void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
-
 		static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 			VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 			VkDebugUtilsMessageTypeFlagsEXT messageType,
 			const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
 			void* pUserData);
-
 		void setupDebugMessenger();
+
 		void pickPhysicalDevice();
 		bool isDeviceSuitable(VkPhysicalDevice device);
 		QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 		void createLogicalDevice();
+
 		void createSurface();
 		bool checkDeviceExtensionSupport(VkPhysicalDevice device);
 		SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
 		VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 		VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
 		VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
+		
 		void createSwapChain();
 		void createImageViews();
 
-		static std::vector<char> readFile(const std::string& filename);
-		void createGraphicsPipeline();
 		VkShaderModule createShaderModule(const std::vector<char>& code);
 		void createRenderPass();
+		void createGraphicsPipeline();
+
 		void createFramebuffers();
+		void createCommandPool();
+		void createCommandBuffer();
+		void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+
+		void createSyncObjects();
+		void drawFrame();
 
 		GLFWwindow* window;
 		VkInstance instance;
 		
 		VkDebugUtilsMessengerEXT debugMessenger;
-		VkSurfaceKHR surface;
 		
 		VkPhysicalDevice physicalDevice;
 		VkDevice device;
@@ -80,16 +87,24 @@ namespace cruz
 		VkQueue graphicsQueue;
 		VkQueue presentQueue;
 
+		VkSurfaceKHR surface;
+
 		VkSwapchainKHR swapChain;
-		std::vector<VkImage> swapChainImages;
 		VkFormat swapChainImageFormat;
 		VkExtent2D swapChainExtent;
+		std::vector<VkImage> swapChainImages;
 		std::vector<VkImageView> swapChainImageViews;
+		std::vector<VkFramebuffer> swapChainFramebuffers;
 
 		VkPipelineLayout pipelineLayout;
-		VkRenderPass renderPass;
 		VkPipeline graphicsPipeline;
+		VkRenderPass renderPass;
 
-		std::vector<VkFramebuffer> swapChainFramebuffers;
+		VkCommandPool commandPool;
+		VkCommandBuffer commandBuffer;
+
+		VkSemaphore imageAvailableSemaphore;
+		VkSemaphore renderFinishedSemaphore;
+		VkFence inFlightFence;
 	};
 }
