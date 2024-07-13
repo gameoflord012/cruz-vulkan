@@ -61,16 +61,17 @@ namespace cruz
 		VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
 		VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 		
+		void createFramebuffers();
 		void createSwapChain();
 		void createImageViews();
+		void recreateSwapChain();
 
 		VkShaderModule createShaderModule(const std::vector<char>& code);
 		void createRenderPass();
 		void createGraphicsPipeline();
 
-		void createFramebuffers();
 		void createCommandPool();
-		void createCommandBuffer();
+		void createCommandBuffers();
 		void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 
 		void createSyncObjects();
@@ -101,10 +102,12 @@ namespace cruz
 		VkRenderPass renderPass;
 
 		VkCommandPool commandPool;
-		VkCommandBuffer commandBuffer;
+		std::vector<VkCommandBuffer> commandBuffers;
 
-		VkSemaphore imageAvailableSemaphore;
-		VkSemaphore renderFinishedSemaphore;
-		VkFence inFlightFence;
+		std::vector<VkSemaphore> imageAvailableSemaphores;
+		std::vector<VkSemaphore> renderFinishedSemaphores;
+		std::vector<VkFence> inFlightFences;
+
+		uint32_t currentFrame = 0;
 	};
 }
