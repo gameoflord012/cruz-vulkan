@@ -33,6 +33,8 @@ namespace cruz
 		void run();
 
 	private:
+		static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
+
 		void initWindow();
 		void initVulkan();
 		void mainLoop();
@@ -65,6 +67,7 @@ namespace cruz
 		void createSwapChain();
 		void createImageViews();
 		void recreateSwapChain();
+		void cleanupSwapChain();
 
 		VkShaderModule createShaderModule(const std::vector<char>& code);
 		void createRenderPass();
@@ -109,5 +112,7 @@ namespace cruz
 		std::vector<VkFence> inFlightFences;
 
 		uint32_t currentFrame = 0;
+
+		bool framebufferResized = false;
 	};
 }

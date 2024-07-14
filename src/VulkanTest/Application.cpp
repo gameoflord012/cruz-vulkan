@@ -65,6 +65,12 @@ static std::vector<char> readFile(const std::string& filename)
 	return buffer;
 }
 
+void cruz::Application::framebufferResizeCallback(GLFWwindow* window, int width, int height)
+{
+	auto app = reinterpret_cast<cruz::Application*>(glfwGetWindowUserPointer(window));
+	app->framebufferResized = true;
+}
+
 void cruz::Application::run()
 {
 	initWindow();
@@ -78,9 +84,12 @@ void cruz::Application::initWindow()
 	glfwInit();
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
 	window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
+
+	glfwSetWindowUserPointer(window, this);
+	glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
 }
 
 void cruz::Application::initVulkan()
@@ -111,13 +120,12 @@ void cruz::Application::mainLoop()
 
 void cruz::Application::cleanup()
 {
-	for (auto imageView : swapChainImageViews) {
-		vkDestroyImageView(device, imageView, nullptr);
-	}
+	cleanupSwapChain();
 
-	for (auto framebuffer : swapChainFramebuffers) {
-		vkDestroyFramebuffer(device, framebuffer, nullptr);
-	}
+	vkDestroyPipeline(device, graphicsPipeline, nullptr);
+	vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+
+	vkDestroyRenderPass(device, renderPass, nullptr);
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 		vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
@@ -125,12 +133,8 @@ void cruz::Application::cleanup()
 		vkDestroyFence(device, inFlightFences[i], nullptr);
 	}
 
-	vkDestroyPipeline(device, graphicsPipeline, nullptr);
-	vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
-
-	vkDestroyRenderPass(device, renderPass, nullptr);
-	vkDestroySwapchainKHR(device, swapChain, nullptr);
 	vkDestroyCommandPool(device, commandPool, nullptr);
+
 	vkDestroyDevice(device, nullptr);
 
 	if (enableValidationLayers) {
@@ -141,7 +145,9 @@ void cruz::Application::cleanup()
 	vkDestroyInstance(instance, nullptr);
 
 	glfwDestroyWindow(window);
+
 	glfwTerminate();
+
 }
 
 void cruz::Application::createInstance()
@@ -586,11 +592,34 @@ void cruz::Application::createFramebuffers()
 
 void cruz::Application::recreateSwapChain()
 {
+	framebufferResized = false;
+
+	// minimize window case
+	int width = 0, height = 0;
+	glfwGetFramebufferSize(window, &width, &height);
+	while (width == 0 || height == 0) {
+		glfwGetFramebufferSize(window, &width, &height);
+		glfwWaitEvents();
+	}
+
 	vkDeviceWaitIdle(device);
 
 	createSwapChain();
 	createImageViews();
 	createFramebuffers();
+}
+
+void cruz::Application::cleanupSwapChain()
+{
+	for (auto imageView : swapChainImageViews) {
+		vkDestroyImageView(device, imageView, nullptr);
+	}
+
+	for (auto framebuffer : swapChainFramebuffers) {
+		vkDestroyFramebuffer(device, framebuffer, nullptr);
+	}
+
+	vkDestroySwapchainKHR(device, swapChain, nullptr);
 }
 
 VkShaderModule cruz::Application::createShaderModule(const std::vector<char>& code)
@@ -888,10 +917,24 @@ void cruz::Application::createSyncObjects()
 void cruz::Application::drawFrame()
 {
 	vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
-	vkResetFences(device, 1, &inFlightFences[currentFrame]);
+
+	if (framebufferResized)
+	{
+		recreateSwapChain();
+	}
 
 	uint32_t imageIndex;
-	vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+	VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+
+	if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+		recreateSwapChain();
+		return;
+	}
+	else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+		throw std::runtime_error("failed to acquire swap chain image!");
+	}
+
+	vkResetFences(device, 1, &inFlightFences[currentFrame]);
 
 	vkResetCommandBuffer(commandBuffers[currentFrame], 0);
 	recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
@@ -926,9 +969,16 @@ void cruz::Application::drawFrame()
 	presentInfo.swapchainCount = 1;
 	presentInfo.pSwapchains = swapChains;
 	presentInfo.pImageIndices = &imageIndex;
-	presentInfo.pResults = nullptr; // Optional
+	presentInfo.pResults = nullptr;
 
-	vkQueuePresentKHR(presentQueue, &presentInfo);
+	result = vkQueuePresentKHR(presentQueue, &presentInfo);
+
+	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebufferResized) {
+		recreateSwapChain();
+	}
+	else if (result != VK_SUCCESS) {
+		throw std::runtime_error("failed to present swap chain image!");
+	}
 
 	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
